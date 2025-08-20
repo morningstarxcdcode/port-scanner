@@ -72,9 +72,9 @@ class CryptographyAnalyzer:
         for password in wordlist:
             for hash_type in hash_types:
                 if hash_type == "MD5":
-                    computed = hashlib.md5(password.encode()).hexdigest()
+                    computed = hashlib.md5(password.encode(), usedforsecurity=False).hexdigest()
                 elif hash_type == "SHA-1":
-                    computed = hashlib.sha1(password.encode()).hexdigest()
+                    computed = hashlib.sha1(password.encode(), usedforsecurity=False).hexdigest()
                 elif hash_type == "SHA-256":
                     computed = hashlib.sha256(password.encode()).hexdigest()
                 elif hash_type == "SHA-384":
