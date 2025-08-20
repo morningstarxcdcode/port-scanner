@@ -1,0 +1,6 @@
+nmap
+requests
+shodan
+tkinter
+fpdf
+pandas
