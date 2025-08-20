@@ -8,7 +8,6 @@ Description: CLI and GUI launcher with modular scanning and wireless attack opti
 import argparse
 from scanner import port_scanner
 from wireless import wireless_attacks
-from gui import gui_app
 from utils import logger
 
 def main():
@@ -23,7 +22,24 @@ def main():
     logger.setup_logger()
 
     if args.mode == "gui":
-        gui_app.run_gui()
+        try:
+            import gui
+            gui.run_gui()
+        except ImportError as e:
+            if "tkinter" in str(e):
+                print("Error: GUI mode requires tkinter. Please install tkinter or use CLI mode.")
+                print("On Ubuntu/Debian: sudo apt-get install python3-tk")
+                print("On CentOS/RHEL: sudo yum install tkinter")
+            else:
+                print(f"Error importing GUI module: {e}")
+            return
+        except Exception as e:
+            if "DISPLAY" in str(e) or "no display" in str(e).lower():
+                print("Error: GUI mode requires a display. Running in headless environment.")
+                print("Please use CLI mode instead: python3 main.py --target <IP>")
+            else:
+                print(f"Error starting GUI: {e}")
+            return
     else:
         if args.wireless_attack:
             if not args.target:

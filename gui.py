@@ -7,11 +7,12 @@ Description: Provides a graphical interface for users to perform port scans and 
 import tkinter as tk
 from tkinter import messagebox, ttk
 import threading
-import subprocess
 import time
 import socket
 import queue
 from wireless import wireless_attacks
+
+# Handle cases where tkinter might not be available
 
 class AnimatedProgressBar(tk.Canvas):
     def __init__(self, parent: tk.Widget, width: int = 700, height: int = 25, max_value: int = 100, **kwargs):
@@ -79,38 +80,40 @@ def run_port_scan() -> None:
             time.sleep(0.1)
 
     def scan() -> None:
-        """Perform the port scan using the advanced port scanner script."""
+        """Perform the port scan using the port scanner module."""
+        from scanner.port_scanner import run_scan
+        import io
+        import sys
+        
         try:
-            process = subprocess.Popen(
-                ["python3", "advanced_port_scanner.py"],
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                bufsize=1,
-                universal_newlines=True,
-            )
-            process.stdin.write(target + "\\n")
-            process.stdin.write(port_range + "\\n")
-            process.stdin.flush()
-
-            total_lines = 100
-            line_count = 0
-
-            for line in process.stdout:
-                port_output_text.insert(tk.END, line)
-                port_output_text.see(tk.END)
-                line_count += 1
-                progress = min(line_count / total_lines * 100, 100)
-                port_progress_bar.update_progress(progress)
-
-            process.wait()
+            # Capture the output from run_scan
+            old_stdout = sys.stdout
+            sys.stdout = captured_output = io.StringIO()
+            
+            # Run the scan
+            run_scan(target, port_range)
+            
+            # Get the output
+            output = captured_output.getvalue()
+            sys.stdout = old_stdout
+            
+            # Display output line by line
+            lines = output.split('\n')
+            for i, line in enumerate(lines):
+                if line.strip():
+                    port_output_text.insert(tk.END, line + '\n')
+                    port_output_text.see(tk.END)
+                    progress = min((i + 1) / len(lines) * 100, 100)
+                    port_progress_bar.update_progress(progress)
+                    root.update()  # Update GUI
+                    
         except Exception as e:
-            messagebox.showerror("Error", f"An error occurred during the scan: {str(e)}")
+            port_output_text.insert(tk.END, f"Error during scan: {str(e)}\n")
         finally:
+            sys.stdout = old_stdout
             port_scan_done.set()
             elapsed = time.time() - start_time
-            port_output_text.insert(tk.END, f"\\nScan completed in {elapsed:.2f} seconds.\\n")
+            port_output_text.insert(tk.END, f"\nScan completed in {elapsed:.2f} seconds.\n")
             port_scan_button.config(state=tk.NORMAL)
             port_progress_bar.update_progress(100)
             port_output_text.config(state=tk.DISABLED)
@@ -177,64 +180,73 @@ def run_wireless_attack() -> None:
     threading.Thread(target=attack, daemon=True).start()
 
 # Initialize the main GUI window
-root = tk.Tk()
-root.title("Advanced Port Scanner GUI")
-root.geometry("800x650")
-root.configure(bg="#000000")
+def run_gui():
+    """Main entry point for the GUI application."""
+    global root, port_target_entry, port_range_entry, port_scan_button, port_output_text
+    global port_progress_bar, port_elapsed_label, wireless_target_entry, wireless_attack_button
+    global wireless_output_text, wireless_progress_bar, wireless_elapsed_label
 
-tab_control = ttk.Notebook(root)
-tab_control.pack(expand=1, fill="both")
+    root = tk.Tk()
+    root.title("Advanced Port Scanner GUI")
+    root.geometry("800x650")
+    root.configure(bg="#000000")
 
-# Port Scan Tab
-port_scan_tab = ttk.Frame(tab_control)
-tab_control.add(port_scan_tab, text="Port Scan")
+    tab_control = ttk.Notebook(root)
+    tab_control.pack(expand=1, fill="both")
 
-tk.Label(port_scan_tab, text="Target IP:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=0, column=0, padx=5, pady=5, sticky="e")
-port_target_entry = tk.Entry(port_scan_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
-port_target_entry.grid(row=0, column=1, padx=5, pady=5)
+    # Port Scan Tab
+    port_scan_tab = ttk.Frame(tab_control)
+    tab_control.add(port_scan_tab, text="Port Scan")
 
-tk.Label(port_scan_tab, text="Port Range:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=1, column=0, padx=5, pady=5, sticky="e")
-port_range_entry = tk.Entry(port_scan_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
-port_range_entry.grid(row=1, column=1, padx=5, pady=5)
-port_range_entry.insert(0, get_default_port_range())
+    tk.Label(port_scan_tab, text="Target IP:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+    port_target_entry = tk.Entry(port_scan_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
+    port_target_entry.grid(row=0, column=1, padx=5, pady=5)
 
-port_scan_button = tk.Button(port_scan_tab, text="Start Scan", command=run_port_scan, bg="#004400", fg="#00FF00", font=("Consolas", 14, "bold"))
-port_scan_button.grid(row=2, column=0, columnspan=2, pady=10)
+    tk.Label(port_scan_tab, text="Port Range:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=1, column=0, padx=5, pady=5, sticky="e")
+    port_range_entry = tk.Entry(port_scan_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
+    port_range_entry.grid(row=1, column=1, padx=5, pady=5)
+    port_range_entry.insert(0, get_default_port_range())
 
-port_progress_bar = AnimatedProgressBar(port_scan_tab, width=700, height=25)
-port_progress_bar.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
+    port_scan_button = tk.Button(port_scan_tab, text="Start Scan", command=run_port_scan, bg="#004400", fg="#00FF00", font=("Consolas", 14, "bold"))
+    port_scan_button.grid(row=2, column=0, columnspan=2, pady=10)
 
-port_elapsed_label = tk.Label(port_scan_tab, text="Elapsed Time: 0.0s", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold"))
-port_elapsed_label.grid(row=4, column=0, columnspan=2, pady=5)
+    port_progress_bar = AnimatedProgressBar(port_scan_tab, width=700, height=25)
+    port_progress_bar.grid(row=3, column=0, columnspan=2, padx=5, pady=5)
 
-port_output_text = tk.Text(port_scan_tab, height=20, width=90, fg="#00FF00", bg="#000000", font=("Consolas", 11, "bold"), insertbackground="#00FF00")
-port_output_text.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
-port_output_text.config(state=tk.DISABLED)
+    port_elapsed_label = tk.Label(port_scan_tab, text="Elapsed Time: 0.0s", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold"))
+    port_elapsed_label.grid(row=4, column=0, columnspan=2, pady=5)
 
-# Wireless Attack Tab
-wireless_tab = ttk.Frame(tab_control)
-tab_control.add(wireless_tab, text="Wireless Attack")
+    port_output_text = tk.Text(port_scan_tab, height=20, width=90, fg="#00FF00", bg="#000000", font=("Consolas", 11, "bold"), insertbackground="#00FF00")
+    port_output_text.grid(row=5, column=0, columnspan=2, padx=5, pady=5)
+    port_output_text.config(state=tk.DISABLED)
 
-tk.Label(wireless_tab, text="Target IP:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=0, column=0, padx=5, pady=5, sticky="e")
-wireless_target_entry = tk.Entry(wireless_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
-wireless_target_entry.grid(row=0, column=1, padx=5, pady=5)
+    # Wireless Attack Tab
+    wireless_tab = ttk.Frame(tab_control)
+    tab_control.add(wireless_tab, text="Wireless Attack")
 
-wireless_attack_button = tk.Button(wireless_tab, text="Start Wireless Attack", command=run_wireless_attack, bg="#004400", fg="#00FF00", font=("Consolas", 14, "bold"))
-wireless_attack_button.grid(row=1, column=0, columnspan=2, pady=10)
+    tk.Label(wireless_tab, text="Target IP:", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold")).grid(row=0, column=0, padx=5, pady=5, sticky="e")
+    wireless_target_entry = tk.Entry(wireless_tab, width=40, font=("Consolas", 12, "bold"), fg="#00FF00", bg="#000000", insertbackground="#00FF00")
+    wireless_target_entry.grid(row=0, column=1, padx=5, pady=5)
 
-wireless_progress_bar = AnimatedProgressBar(wireless_tab, width=700, height=25)
-wireless_progress_bar.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+    wireless_attack_button = tk.Button(wireless_tab, text="Start Wireless Attack", command=run_wireless_attack, bg="#004400", fg="#00FF00", font=("Consolas", 14, "bold"))
+    wireless_attack_button.grid(row=1, column=0, columnspan=2, pady=10)
 
-wireless_elapsed_label = tk.Label(wireless_tab, text="Elapsed Time: 0.0s", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold"))
-wireless_elapsed_label.grid(row=3, column=0, columnspan=2, pady=5)
+    wireless_progress_bar = AnimatedProgressBar(wireless_tab, width=700, height=25)
+    wireless_progress_bar.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
 
-wireless_output_text = tk.Text(wireless_tab, height=20, width=90, fg="#00FF00", bg="#000000", font=("Consolas", 11, "bold"), insertbackground="#00FF00")
-wireless_output_text.grid(row=4, column=0, columnspan=2, padx=5, pady=5)
-wireless_output_text.config(state=tk.DISABLED)
+    wireless_elapsed_label = tk.Label(wireless_tab, text="Elapsed Time: 0.0s", fg="#00FF00", bg="#000000", font=("Consolas", 12, "bold"))
+    wireless_elapsed_label.grid(row=3, column=0, columnspan=2, pady=5)
 
-# Auto-fill local IP in target fields
-local_ip = get_local_ip()
-port_target_entry.insert(0, local_ip)
-wireless_target_entry.insert(0, local_ip)
+    wireless_output_text = tk.Text(wireless_tab, height=20, width=90, fg="#00FF00", bg="#000000", font=("Consolas", 11, "bold"), insertbackground="#00FF00")
+    wireless_output_text.grid(row=4, column=0, columnspan=2, padx=5, pady=5)
+    wireless_output_text.config(state=tk.DISABLED)
 
-root.mainloop()
+    # Auto-fill local IP in target fields
+    local_ip = get_local_ip()
+    port_target_entry.insert(0, local_ip)
+    wireless_target_entry.insert(0, local_ip)
+
+    root.mainloop()
+
+if __name__ == "__main__":
+    run_gui()
