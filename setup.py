@@ -1,4 +1,5 @@
-from setuptools import setup, find_packages # type: ignore
+from setuptools import find_packages  # type: ignore
+from setuptools import setup
 
 setup(
     name="advanced-port-scanner",
@@ -19,7 +20,7 @@ setup(
             "advportscan=main:main",
         ],
     },
-    python_requires='>=3.8',
+    python_requires=">=3.8",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

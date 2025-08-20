@@ -1,0 +1,30 @@
+version: 2.1
+
+executors:
+  python:
+    docker:
+      - image: cimg/python:3.12
+
+jobs:
+  test:
+    executor: python
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+      - run:
+          name: Run tests
+          command: python -m unittest discover tests/ -v
+      - run:
+          name: Test CLI functionality
+          command: |
+            python main.py --help
+            python main.py --target 127.0.0.1 --ports 22,80
+
+workflows:
+  test:
+    jobs:
+      - test
