@@ -2,7 +2,8 @@
 Main entry point for Advanced Port Scanner and Wireless Attack Tool
 Author: morningstarxcdcode
 Poster: morningstarxcdcode's Ethical Hacking Suite
-Description: Professional CLI and GUI launcher with modular scanning and advanced cybersecurity options
+Description: Professional CLI and GUI launcher with modular scanning and
+advanced cybersecurity options
 """
 
 import argparse
@@ -190,7 +191,6 @@ async def main():
 
     # Setup logging
     logger.setup_logger()
-    log = logger.get_logger()
 
     # Load configuration
     if args.profile:
@@ -237,9 +237,7 @@ async def main():
     if args.crypto_analyze:
         if args.wordlist and Path(args.wordlist).exists():
             with open(args.wordlist, "r") as f:
-                wordlist = [line.strip() for line in f.readlines()]
-        else:
-            wordlist = None
+                [line.strip() for line in f.readlines()]
 
         result = run_crypto_analysis(args.crypto_analyze, args.type)
 
@@ -313,7 +311,8 @@ async def main():
         except ImportError as e:
             if "tkinter" in str(e):
                 print(
-                    "❌ GUI mode requires tkinter. Please install tkinter or use CLI mode."
+                    "❌ GUI mode requires tkinter. Please install tkinter "
+                    "or use CLI mode."
                 )
                 print("On Ubuntu/Debian: sudo apt-get install python3-tk")
                 print("On CentOS/RHEL: sudo yum install tkinter")
@@ -401,15 +400,15 @@ async def main():
             if len(port_list) > 100:
                 port_list = port_list[:100]
                 print(
-                    f"ℹ️  Limiting vulnerability scan to first 100 ports for performance"
+                    "ℹ️  Limiting vulnerability scan to first 100 ports "
+                    "for performance"
                 )
 
             vuln_report = await run_vulnerability_scan(target, port_list)
 
-            print(f"\n🛡️ Vulnerability Assessment Results:")
-            print(
-                f"Total vulnerabilities found: {vuln_report['summary']['total_vulnerabilities']}"
-            )
+            print("\n🛡️ Vulnerability Assessment Results:")
+            total_vulns = vuln_report["summary"]["total_vulnerabilities"]
+            print(f"Total vulnerabilities found: {total_vulns}")
             print(f"Critical: {vuln_report['summary']['critical']}")
             print(f"High: {vuln_report['summary']['high']}")
             print(f"Medium: {vuln_report['summary']['medium']}")
@@ -419,9 +418,11 @@ async def main():
             if vuln_report["vulnerabilities"]:
                 print("\n🚨 Vulnerabilities found:")
                 for vuln in vuln_report["vulnerabilities"][:10]:  # Show first 10
-                    print(
-                        f"  • {vuln['cve_id']} ({vuln['severity']}) - Port {vuln['port']}"
+                    vuln_info = (
+                        f"  • {vuln['cve_id']} ({vuln['severity']}) - "
+                        f"Port {vuln['port']}"
                     )
+                    print(vuln_info)
                     print(f"    {vuln['description']}")
 
         # Wireless attacks
@@ -446,7 +447,7 @@ def interactive_mode():
 
 Available commands:
   scan <target>           - Perform port scan
-  osint <target>          - Gather OSINT intelligence  
+  osint <target>          - Gather OSINT intelligence
   vuln <target>           - Vulnerability assessment
   crypto <data>           - Cryptographic analysis
   stego <file>            - Steganography analysis
@@ -466,14 +467,16 @@ Available commands:
                 break
             elif command == "help":
                 print(
-                    "Available commands: scan, osint, vuln, crypto, stego, wireless, config, help, exit"
+                    "Available commands: scan, osint, vuln, crypto, stego, "
+                    "wireless, config, help, exit"
                 )
             elif command == "config":
-                print(
-                    f"Current configuration profile: {config.get('active_profile', 'default')}"
-                )
-                print(f"Scan timeout: {config.get('scanning.default_timeout')} seconds")
-                print(f"Max threads: {config.get('scanning.max_threads')}")
+                config_profile = config.get("active_profile", "default")
+                print(f"Current configuration profile: {config_profile}")
+                timeout = config.get("scanning.default_timeout")
+                print(f"Scan timeout: {timeout} seconds")
+                threads = config.get("scanning.max_threads")
+                print(f"Max threads: {threads}")
             elif command.startswith("scan "):
                 target = command.split(" ", 1)[1]
                 port_scanner.run_scan(target, "1-1000", "all")

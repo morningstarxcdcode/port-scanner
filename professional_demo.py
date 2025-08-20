@@ -5,14 +5,12 @@ Author: morningstarxcdcode
 Description: Comprehensive demonstration of all advanced cybersecurity features
 """
 
-import sys
 import time
 
 from auto_scan import run_auto_scan
 from crypto.crypto_analyzer import PasswordGenerator, run_crypto_analysis
 from reports.report_generator import generate_report
 from scanner.port_scanner import run_scan
-from shodan_scan import run_shodan_scan
 from utils.logger import get_logger
 from wireless.wireless_attacks import run_attack
 

@@ -6,24 +6,18 @@ Description: Professional cryptographic analysis and steganography tools
 
 import base64
 import hashlib
-import io
 import os
 import random
 import string
-import struct
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import qrcode
-from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from PIL import Image
 
-from config.config_manager import config
 from utils.logger import get_logger
 
 logger = get_logger()
@@ -72,9 +66,13 @@ class CryptographyAnalyzer:
         for password in wordlist:
             for hash_type in hash_types:
                 if hash_type == "MD5":
-                    computed = hashlib.md5(password.encode(), usedforsecurity=False).hexdigest()
+                    computed = hashlib.md5(
+                        password.encode(), usedforsecurity=False
+                    ).hexdigest()
                 elif hash_type == "SHA-1":
-                    computed = hashlib.sha1(password.encode(), usedforsecurity=False).hexdigest()
+                    computed = hashlib.sha1(
+                        password.encode(), usedforsecurity=False
+                    ).hexdigest()
                 elif hash_type == "SHA-256":
                     computed = hashlib.sha256(password.encode()).hexdigest()
                 elif hash_type == "SHA-384":
@@ -204,7 +202,7 @@ class CryptographyAnalyzer:
             try:
                 decoded = base64.b64decode(cipher_text).decode("utf-8")
                 results["Base64"] = decoded
-            except:
+            except Exception:
                 pass
 
         # Try hex decoding
@@ -212,7 +210,7 @@ class CryptographyAnalyzer:
             try:
                 decoded = bytes.fromhex(cipher_text).decode("utf-8")
                 results["Hexadecimal"] = decoded
-            except:
+            except Exception:
                 pass
 
         return results
@@ -379,7 +377,8 @@ class SteganographyAnalyzer:
                     total = len(bits)
                     ratio = ones / total
 
-                    # Suspicious if ratio is too close to 0.5 (random) or too far (pattern)
+                    # Suspicious if ratio is too close to 0.5 (random) or
+                    # too far (pattern)
                     suspicion = abs(ratio - 0.5)
                     analysis[channel] = {
                         "ones_ratio": ratio,
