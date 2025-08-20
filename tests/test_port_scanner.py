@@ -1,5 +1,9 @@
 import unittest
-from scanner.port_scanner import run_scan  # Adjusted import based on the actual function
+
+from scanner.port_scanner import (
+    run_scan,  # Adjusted import based on the actual function
+)
+
 
 class TestPortScanner(unittest.TestCase):
     def test_run_scan_valid(self):
@@ -23,6 +27,7 @@ class TestPortScanner(unittest.TestCase):
             run_scan("127.0.0.1", "9999")  # Assuming port 9999 is closed
         except Exception as e:
             self.fail(f"run_scan raised an exception: {str(e)}")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,7 @@ import logging
 
 _logger = None
 
+
 def setup_logger():
     global _logger
     if _logger is None:
@@ -20,8 +21,8 @@ def setup_logger():
         ch.setFormatter(formatter)
         _logger.addHandler(ch)
 
+
 def get_logger():
-    global _logger
     if _logger is None:
         setup_logger()
     return _logger

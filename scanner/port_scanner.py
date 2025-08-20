@@ -5,13 +5,15 @@ Poster: morningstar's Ethical Hacking Suite
 Description: Enhanced port scanner with banner grabbing and vulnerability checking
 """
 
-import socket
-import requests  # type: ignore
-import threading
-from typing import List, Tuple, Optional
 import ipaddress  # Importing ipaddress for IP validation
+import socket
+import threading
+from typing import List, Optional, Tuple
+
+import requests  # type: ignore
 
 COMMON_PORTS = [21, 22, 23, 25, 53, 80, 110, 143, 443, 3306, 8080, 8081, 8443, 8888]
+
 
 def grab_banner(ip: str, port: int) -> Optional[str]:
     """
@@ -21,10 +23,11 @@ def grab_banner(ip: str, port: int) -> Optional[str]:
         with socket.socket() as s:
             s.settimeout(2)
             s.connect((ip, port))
-            banner = s.recv(1024).decode(errors='ignore').strip()
+            banner = s.recv(1024).decode(errors="ignore").strip()
             return banner
     except Exception:
         return None
+
 
 def check_vulnerability(service: str) -> str:
     """
@@ -41,7 +44,12 @@ def check_vulnerability(service: str) -> str:
     except Exception:
         return "⚠️ Error checking vulnerabilities."
 
-def scan_port(target: str, port: int, results: List[Tuple[int, bool, Optional[str], Optional[str]]]) -> None:
+
+def scan_port(
+    target: str,
+    port: int,
+    results: List[Tuple[int, bool, Optional[str], Optional[str]]],
+) -> None:
     """
     Scans a single port on the target IP and appends the result to the results list.
     """
@@ -58,6 +66,7 @@ def scan_port(target: str, port: int, results: List[Tuple[int, bool, Optional[st
                 results.append((port, False, None, None))
     except Exception:
         results.append((port, False, None, None))
+
 
 def run_scan(target: str, ports: str = "1-65535", scan_type: str = "all") -> None:
     """
@@ -83,12 +92,12 @@ def run_scan(target: str, ports: str = "1-65535", scan_type: str = "all") -> Non
                 for part in parts:
                     if "-" in part:
                         start, end = part.split("-")
-                        port_list.extend(range(int(start), int(end)+1))
+                        port_list.extend(range(int(start), int(end) + 1))
                     else:
                         port_list.append(int(part))
             elif "-" in ports:
                 start, end = ports.split("-")
-                port_list = list(range(int(start), int(end)+1))
+                port_list = list(range(int(start), int(end) + 1))
             else:
                 port_list = [int(ports)]
         except Exception:
