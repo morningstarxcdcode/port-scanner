@@ -3,3 +3,4 @@ requests>=2.31.0
 shodan>=1.31.0
 fpdf2>=2.7.4
 pandas>=2.0.0
+urllib3>=2.6.0 # not directly required, pinned by Snyk to avoid a vulnerability
